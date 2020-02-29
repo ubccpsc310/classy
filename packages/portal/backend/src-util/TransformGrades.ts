@@ -25,8 +25,10 @@ export class TransformGrades {
     private dc: DatabaseController;
 
     // Grade multipliers for public and private test suites
-    private PUB_MULT = 0.5;
-    private PRIV_MULT = 0.5;
+    private PUB_TEST_COUNT = 42;
+    private PRIV_TEST_COUNT = 20;
+    private PUB_MULT = this.PUB_TEST_COUNT / (this.PUB_TEST_COUNT + this.PRIV_TEST_COUNT);
+    private PRIV_MULT = this.PRIV_TEST_COUNT / (this.PUB_TEST_COUNT + this.PRIV_TEST_COUNT);
 
     private retroPath = `${__dirname}/c1retros.csv`;
     private retroScoreMap: {[student: string]: number} = {};
