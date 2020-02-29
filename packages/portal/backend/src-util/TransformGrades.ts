@@ -28,10 +28,10 @@ export class TransformGrades {
     private PUB_MULT = 0.5;
     private PRIV_MULT = 0.5;
 
-    private retroPath = `${__dirname}/retros.csv`;
+    private retroPath = `${__dirname}/c1retros.csv`;
     private retroScoreMap: {[student: string]: number};
 
-    private regressionPath = `${__dirname}/regressions.csv`;
+    private regressionPath = `${__dirname}/c1regressions.csv`;
     private regressionScoreMap: {[team: string]: number};
 
     private parserOptions = {
@@ -71,7 +71,7 @@ export class TransformGrades {
         const data = csvParse(csvData, this.parserOptions);
         for (const record of data) {
             const name = record["Team"];
-            const val = record["Penalties"];
+            const val = record["Penalty"];
             this.regressionScoreMap[name] = val;
         }
     }
