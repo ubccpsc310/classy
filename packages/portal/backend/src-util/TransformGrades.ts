@@ -219,7 +219,7 @@ export class TransformGrades {
 
                 // change grade
                 newGrade.urlName = "Transformed";
-                newGrade.URL = `https://www.students.cs.ubc.ca/~cs-310/2019W2/reports/c1/${result.repoId}/index.html`;
+                newGrade.URL = `https://www.students.cs.ubc.ca/~cs-310/2019W2/reports/${this.DELIVID}/${result.repoId}/index.html`;
                 newGrade.score = finalScore;
 
                 newGrade = this.applyRegressionScore(newGrade, result.repoId);
