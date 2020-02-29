@@ -29,10 +29,10 @@ export class TransformGrades {
     private PRIV_MULT = 0.5;
 
     private retroPath = `${__dirname}/c1retros.csv`;
-    private retroScoreMap: {[student: string]: number};
+    private retroScoreMap: {[student: string]: number} = {};
 
     private regressionPath = `${__dirname}/c1regressions.csv`;
-    private regressionScoreMap: {[team: string]: number};
+    private regressionScoreMap: {[team: string]: number} = {};
 
     private parserOptions = {
         columns:          true,
@@ -71,42 +71,63 @@ export class TransformGrades {
         const data = csvParse(csvData, this.parserOptions);
         for (const record of data) {
             const name = record["Team"];
-            const val = record["Penalty"];
+            const val = Number((record["Penalty"] * 100).toFixed(2));
             this.regressionScoreMap[name] = val;
         }
     }
 
     public applyRegressionScore(grade: Grade, repoId: string) {
-        Log.trace(`Applying retro score to ${grade.personId}. Would be ${this.regressionScoreMap[repoId]}`);
-        grade.score -= this.regressionScoreMap[repoId];
+        let regression = this.regressionScoreMap[repoId];
+        regression = typeof regression !== "undefined" ? regression : 0;
+        Log.info(`Applying regression score to ${grade.personId}. Would be ${regression}`);
+        grade.custom.c1Regression = {
+            preRegression: grade.score,
+            penalty: regression,
+            postRegression: grade.score - regression
+        };
+        if (grade.comment === undefined) {
+            grade.comment = "";
+        }
+        if (regression > 0) {
+            grade.comment += `A regression penalty of ${regression}% was applied to this grade.\n`;
+        } else {
+            grade.comment += `No regressions were applied to this grade.\n`;
+        }
+        grade.score -= regression;
+        return grade;
     }
 
     public loadRetroScores() {
         const csvData = fs.readFileSync(this.retroPath).toString();
         const data = csvParse(csvData, this.parserOptions);
         for (const record of data) {
-            const member1 = record["Q1.5"];
+            const member1 = record["Q1.5"].toLowerCase();
             const member1Score = this.getScore(member1, record["Q2.9"]);
-            const member2 = record["Q24"];
+            const member2 = record["Q24"].toLowerCase();
             const member2Score = this.getScore(member1, record["Q35"]);
-            const member3 = record["Q52"];
+            const member3 = record["Q52"].toLowerCase();
             const member3Score = this.getScore(member1, record["Q47"]);
-            this.regressionScoreMap[member1] = member1Score;
-            this.regressionScoreMap[member2] = member2Score;
-            this.regressionScoreMap[member3] = member3Score;
+            this.retroScoreMap[member1] = member1Score;
+            this.retroScoreMap[member2] = member2Score;
+            this.retroScoreMap[member3] = member3Score;
         }
     }
 
     public applyRetroScores(grade: Grade) {
-        const retroScore = this.retroScoreMap[grade.personId];
-        Log.trace(`Applying retro score to ${grade.personId}. Would be ${retroScore}`);
+        const retro = this.retroScoreMap[grade.personId];
+        const retroScore = typeof retro !== "undefined" ? retro : 1;
+        Log.info(`Applying retro score to ${grade.personId}. Would be ${retroScore}`);
         grade.custom.c1Retro = retroScore;
-        if (retroScore !== 1.0) {
-            grade.comment = `Retrospective score: ${retroScore}.
-            Note that retrospective scores will not be applied to grades until end of term`;
-        } else {
-            grade.comment = `Retrospective score: 1.0.`;
+        if (grade.comment === undefined) {
+            grade.comment = "";
         }
+        if (retroScore !== 1.0) {
+            grade.comment += `Retrospective score: ${retroScore}.` +
+                `Note that retrospective scores will not be applied to grades until end of term\n`;
+        } else {
+            grade.comment += `Retrospective score: 1.0.\n`;
+        }
+        return grade;
     }
 
     private getScore(name: string, field: string) {
@@ -125,8 +146,8 @@ export class TransformGrades {
 
         this.loadRegressionScores();
         this.loadRetroScores();
-        Log.trace(this.regressionScoreMap);
-        Log.trace(this.retroScoreMap);
+        Log.info(this.regressionScoreMap);
+        Log.info(this.retroScoreMap);
 
         const gradesC = new GradesController();
         const resultsC = new ResultsController();
@@ -190,22 +211,23 @@ export class TransformGrades {
                         scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
                 }
 
-                const newGrade: Grade = JSON.parse(JSON.stringify(grade)); // Object.assign is a shallow copy which doesn't work here
-                (newGrade.custom as any).publicGrade = grade; // keep the old grad record around in the grade.custom field
+                let newGrade: Grade = JSON.parse(JSON.stringify(grade)); // Object.assign is a shallow copy which doesn't work here
+                (newGrade.custom as any).publicGrade = grade; // keep the old grade record around in the grade.custom field
                 newGrade.timestamp = Date.now(); // TS for when we updated the grade record
 
                 // change grade
-                // could add comment here too if needed (e.g., to newGrade.comment)
                 newGrade.urlName = "Transformed";
-                newGrade.URL = `https://www.students.cs.ubc.ca/~cs-310/2019W2/reports/c1/${result.repoId}/index.html`
+                newGrade.URL = `https://www.students.cs.ubc.ca/~cs-310/2019W2/reports/c1/${result.repoId}/index.html`;
                 newGrade.score = finalScore;
 
-                this.applyRegressionScore(newGrade, result.repoId);
-                this.applyRetroScores(newGrade);
+                newGrade = this.applyRegressionScore(newGrade, result.repoId);
+                newGrade = this.applyRetroScores(newGrade);
 
                 gradeDeltas.push(Number((newGrade.score - grade.score).toFixed(2))); // track delta
 
+                Log.info("Student comment for", newGrade.personId, ":", newGrade.comment);
                 Log.info("TransformGrades::process() - processing result: " + url);
+                Log.info("Full new grade object:", newGrade);
                 if (this.DRY_RUN === false || grade.personId === this.TEST_USER) {
                     // publish grade
                     Log.info("Grade update for: " + newGrade.personId);
@@ -220,7 +242,7 @@ export class TransformGrades {
             }
         }
 
-        // Log.trace('gradeDeltas: ' + JSON.stringify(gradeDeltas));
+        // Log.info('gradeDeltas: ' + JSON.stringify(gradeDeltas));
         let gradeIncreased = 0;
         let gradeDecreased = 0;
         let gradeUnchanged = 0;
