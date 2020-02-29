@@ -147,7 +147,7 @@ export class TransformGrades {
         const gradeDeltas: number[] = [];
 
         for (const grade of grades) {
-            const url = grade.URL; // TODO change this one
+            const url = grade.URL;
 
             const result = await resultsC.getResultFromURL(url, this.DELIVID);
             if (result !== null) {
@@ -197,6 +197,7 @@ export class TransformGrades {
                 // change grade
                 // could add comment here too if needed (e.g., to newGrade.comment)
                 newGrade.urlName = "Transformed";
+                newGrade.URL = `https://www.students.cs.ubc.ca/~cs-310/2019W2/reports/c1/${result.repoId}/index.html`
                 newGrade.score = finalScore;
 
                 this.applyRegressionScore(newGrade, result.repoId);
