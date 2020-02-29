@@ -21,7 +21,7 @@ import {Grade} from "../src/Types";
  * 3) Ensure your .env corresponds to the production values; change DB_URL connection string to use 127.0.0.1
  *      * specifically, make sure DB_URL contains the mongo username and password
  * 4) ssh user@host -L 27017:127.0.0.1:27017
- * 5) Run this script: node packages/portal/backend/src-util/TransformGrades.js
+ * 5) Run this script: node packages/portal/backend/src-util/TraverseResults.js
  */
 export class TraverseResults {
 

@@ -82,7 +82,7 @@ export class TransformGrades {
         let regression = this.regressionScoreMap[repoId];
         regression = typeof regression !== "undefined" ? regression : 0;
         Log.info(`Applying regression score to ${grade.personId}. Would be ${regression}`);
-        grade.custom.c1Regression = {
+        grade.custom.regression = {
             preRegression: grade.score,
             penalty: regression,
             postRegression: grade.score - regression
@@ -201,7 +201,7 @@ export class TransformGrades {
                 const scorePub = Number(result.output.report.scoreTest);
                 const scorePriv = Number((result.output.report.custom as any).private.scoreTest);
                 const scorePubOverall = Number(result.output.report.scoreOverall);
-
+                // TODO add scorePub/scorePriv to the grade comment
                 let finalScore = (scorePub * this.PUB_MULT) + (scorePriv * this.PRIV_MULT);
                 finalScore = Number(finalScore.toFixed(2));
                 Log.info("Updating grade for " + this.DELIVID + "; original: " +
@@ -227,9 +227,7 @@ export class TransformGrades {
 
                 gradeDeltas.push(Number((newGrade.score - grade.score).toFixed(2))); // track delta
 
-                Log.info("Student comment for", newGrade.personId, ":", newGrade.comment);
                 Log.info("AppendGradeComments::process() - processing result: " + url);
-                Log.info("Full new grade object:", newGrade);
                 if (this.DRY_RUN === false || grade.personId === this.TEST_USER) {
                     // publish grade
                     Log.info("Grade update for: " + newGrade.personId);
