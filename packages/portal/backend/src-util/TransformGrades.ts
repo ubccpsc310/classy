@@ -18,7 +18,7 @@ import {AuditLabel, Grade} from "../src/Types";
  * 3) Ensure your .env corresponds to the production values; change DB_URL connection string to use 127.0.0.1
  *      * specifically, make sure DB_URL contains the mongo username and password
  * 4) ssh user@host -L 27017:127.0.0.1:27017
- * 5) Run this script: node packages/portal/backend/src-util/TransformGrades.js
+ * 5) Run this script: node packages/portal/backend/src-util/AppendGradeComments.js
  */
 export class TransformGrades {
 
@@ -64,7 +64,7 @@ export class TransformGrades {
     private readonly DELIVID: string = 'c1';
 
     constructor() {
-        Log.info("TransformGrades::<init> - start");
+        Log.info("AppendGradeComments::<init> - start");
         this.dc = DatabaseController.getInstance();
     }
 
@@ -106,9 +106,9 @@ export class TransformGrades {
             const member1 = record["Q1.5"].toLowerCase();
             const member1Score = this.getScore(member1, record["Q2.9"]);
             const member2 = record["Q24"].toLowerCase();
-            const member2Score = this.getScore(member1, record["Q35"]);
+            const member2Score = this.getScore(member2, record["Q35"]);
             const member3 = record["Q52"].toLowerCase();
-            const member3Score = this.getScore(member1, record["Q47"]);
+            const member3Score = this.getScore(member3, record["Q47"]);
             this.retroScoreMap[member1] = member1Score;
             this.retroScoreMap[member2] = member2Score;
             this.retroScoreMap[member3] = member3Score;
@@ -144,7 +144,7 @@ export class TransformGrades {
     }
 
     public async transformGrades(): Promise<void> {
-        Log.info("TransformGrades::process() - start for delivId: " + this.DELIVID);
+        Log.info("AppendGradeComments::process() - start for delivId: " + this.DELIVID);
 
         this.loadRegressionScores();
         this.loadRetroScores();
@@ -165,7 +165,7 @@ export class TransformGrades {
         }
 
         // should be one per student
-        Log.info("TransformGrades::process() - for: " + this.DELIVID + "; # grades: " + grades.length);
+        Log.info("AppendGradeComments::process() - for: " + this.DELIVID + "; # grades: " + grades.length);
 
         const gradeDeltas: number[] = [];
 
@@ -228,7 +228,7 @@ export class TransformGrades {
                 gradeDeltas.push(Number((newGrade.score - grade.score).toFixed(2))); // track delta
 
                 Log.info("Student comment for", newGrade.personId, ":", newGrade.comment);
-                Log.info("TransformGrades::process() - processing result: " + url);
+                Log.info("AppendGradeComments::process() - processing result: " + url);
                 Log.info("Full new grade object:", newGrade);
                 if (this.DRY_RUN === false || grade.personId === this.TEST_USER) {
                     // publish grade
@@ -240,7 +240,7 @@ export class TransformGrades {
                 }
             } else {
                 // should not really happen; if we have a grade already we must have a result
-                Log.warn("TransformGrades::process - WARN; no grade found for: " + url);
+                Log.warn("AppendGradeComments::process - WARN; no grade found for: " + url);
             }
         }
 
@@ -272,7 +272,7 @@ export class TransformGrades {
             ((decreasedAmount + increasedAmount) / (gradeDecreased + gradeIncreased + gradeUnchanged)).toFixed(2));
         Log.info("*** /Transformation Summary ***");
 
-        Log.info("TransformGrades::process() - done");
+        Log.info("AppendGradeComments::process() - done");
     }
 }
 
@@ -280,9 +280,9 @@ const transformer = new TransformGrades();
 const start = Date.now();
 Log.Level = LogLevel.INFO;
 transformer.transformGrades().then(function() {
-    Log.info("TransformGrades::process() - complete; took: " + Util.took(start));
+    Log.info("AppendGradeComments::process() - complete; took: " + Util.took(start));
     process.exit();
 }).catch(function(err) {
-    Log.error("TransformGrades::process() - ERROR: " + err.message);
+    Log.error("AppendGradeComments::process() - ERROR: " + err.message);
     process.exit();
 });
