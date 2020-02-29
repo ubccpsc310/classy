@@ -124,7 +124,7 @@ export class TransformGrades {
             grade.comment = "";
         }
         if (retroScore !== 1.0) {
-            grade.comment += `Retrospective score: ${retroScore}.` +
+            grade.comment += `Retrospective score: ${retroScore}. ` +
                 `Note that retrospective scores will not be applied to grades until end of term\n`;
         } else {
             grade.comment += `Retrospective score: 1.0.\n`;
