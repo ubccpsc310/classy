@@ -25,15 +25,16 @@ export class TransformGrades {
     private dc: DatabaseController;
 
     // Grade multipliers for public and private test suites
-    private PUB_TEST_COUNT = 42;
-    private PRIV_TEST_COUNT = 20;
+    private PUB_TEST_COUNT = 44;
+    private PRIV_TEST_COUNT = 25;
     private PUB_MULT = this.PUB_TEST_COUNT / (this.PUB_TEST_COUNT + this.PRIV_TEST_COUNT);
     private PRIV_MULT = this.PRIV_TEST_COUNT / (this.PUB_TEST_COUNT + this.PRIV_TEST_COUNT);
 
-    private retroPath = `${__dirname}/c1retros.csv`;
+    private retroPath = `${__dirname}/c2retros.csv`;
     private retroScoreMap: {[student: string]: number} = {};
+    private retroCommentMap: {[student: string]: string} = {};
 
-    private regressionPath = `${__dirname}/c1regressions.csv`;
+    private regressionPath = `${__dirname}/c2regressions.csv`;
     private regressionScoreMap: {[team: string]: number} = {};
 
     private parserOptions = {
@@ -61,7 +62,7 @@ export class TransformGrades {
      *
      * @type {string}
      */
-    private readonly DELIVID: string = 'c1';
+    private readonly DELIVID: string = 'c2';
 
     constructor() {
         Log.info("AppendGradeComments::<init> - start");
@@ -92,10 +93,10 @@ export class TransformGrades {
         }
         if (regression > 0) {
             grade.comment += `A regression penalty of ${regression}% was applied to this grade.\n`;
+            grade.score -= regression;
         } else {
             grade.comment += `No regressions were applied to this grade.\n`;
         }
-        grade.score -= regression;
         return grade;
     }
 
@@ -115,11 +116,41 @@ export class TransformGrades {
         }
     }
 
+    public loadRetroComments() {
+        const csvData = fs.readFileSync(this.retroPath).toString();
+        const data = csvParse(csvData, this.parserOptions);
+        for (const record of data) {
+            const member1 = record["Q1.5"].toLowerCase();
+            const member1Comment = record["Q2.10"];
+            const member2 = record["Q24"].toLowerCase();
+            const member2Comment = record["Q36"];
+            const member3 = record["Q52"].toLowerCase();
+            const member3Comment = record["Q48"];
+            this.retroCommentMap[member1] = member1Comment;
+            this.retroCommentMap[member2] = member2Comment;
+            this.retroCommentMap[member3] = member3Comment;
+        }
+    }
+
+    public appendRetroComment(grade: Grade) {
+        const comment = this.retroCommentMap[grade.personId];
+        const retroComment = typeof comment !== "undefined" ? comment : "";
+        Log.info(`Appending retro comment to ${grade.personId}. Would be "${retroComment}"`);
+        grade.custom.retroComment = retroComment;
+        if (grade.comment === undefined) {
+            grade.comment = "";
+        }
+        if (retroComment !== "") {
+            grade.comment += `Retrospective comment: ${retroComment}.\n`;
+        }
+        return grade;
+    }
+
     public applyRetroScores(grade: Grade) {
         const retro = this.retroScoreMap[grade.personId];
         const retroScore = typeof retro !== "undefined" ? retro : 1;
         Log.info(`Applying retro score to ${grade.personId}. Would be ${retroScore}`);
-        grade.custom.c1Retro = retroScore;
+        grade.custom.retro = retroScore;
         if (grade.comment === undefined) {
             grade.comment = "";
         }
@@ -148,6 +179,7 @@ export class TransformGrades {
 
         this.loadRegressionScores();
         this.loadRetroScores();
+        this.loadRetroComments();
         Log.info(this.regressionScoreMap);
         Log.info(this.retroScoreMap);
 
@@ -224,6 +256,7 @@ export class TransformGrades {
 
                 newGrade = this.applyRegressionScore(newGrade, result.repoId);
                 newGrade = this.applyRetroScores(newGrade);
+                newGrade = this.appendRetroComment(newGrade);
 
                 gradeDeltas.push(Number((newGrade.score - grade.score).toFixed(2))); // track delta
 
