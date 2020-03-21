@@ -226,8 +226,6 @@ export class TransformGrades {
 
                     (result.output.report.custom as any).private = {};
                     (result.output.report.custom as any).private.scoreTest = 0;
-
-                    continue; // just skip this row; this is a fatal error though that we need to figure out
                 }
 
                 const scorePub = Number(result.output.report.scoreTest);
