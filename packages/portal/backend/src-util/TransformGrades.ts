@@ -25,16 +25,16 @@ export class TransformGrades {
     private dc: DatabaseController;
 
     // Grade multipliers for public and private test suites
-    private PUB_TEST_COUNT = 44;
-    private PRIV_TEST_COUNT = 25;
+    private PUB_TEST_COUNT = 61;
+    private PRIV_TEST_COUNT = 57;
     private PUB_MULT = this.PUB_TEST_COUNT / (this.PUB_TEST_COUNT + this.PRIV_TEST_COUNT);
     private PRIV_MULT = this.PRIV_TEST_COUNT / (this.PUB_TEST_COUNT + this.PRIV_TEST_COUNT);
 
-    private retroPath = `${__dirname}/c2retros.csv`;
+    private retroPath = `${__dirname}/c3retros.csv`;
     private retroScoreMap: {[student: string]: number} = {};
     private retroCommentMap: {[student: string]: string} = {};
 
-    private regressionPath = `${__dirname}/c2regressions.csv`;
+    private regressionPath = `${__dirname}/c3regressions.csv`;
     private regressionScoreMap: {[team: string]: number} = {};
 
     private parserOptions = {
@@ -48,7 +48,7 @@ export class TransformGrades {
      *
      * @type {boolean}
      */
-    private DRY_RUN = true;
+    private DRY_RUN = false;
 
     /**
      * A test user that can be used for checking DB writing (ignores DRY_RUN above, but only for this user).
@@ -62,7 +62,7 @@ export class TransformGrades {
      *
      * @type {string}
      */
-    private readonly DELIVID: string = 'c2';
+    private readonly DELIVID: string = 'c3';
 
     constructor() {
         Log.info("TransformGrades::<init> - start");
@@ -148,7 +148,10 @@ export class TransformGrades {
 
     public applyRetroScores(grade: Grade) {
         const retro = this.retroScoreMap[grade.personId];
-        const retroScore = typeof retro !== "undefined" ? retro : 1;
+        let retroScore = typeof retro !== "undefined" ? retro : 0;
+        if (retroScore === 1.3) {
+            retroScore = 1.5; // FIXME this shouldn't stay here.
+        }
         Log.info(`Applying retro score to ${grade.personId}. Would be ${retroScore}`);
         grade.custom.retro = retroScore;
         if (grade.comment === undefined) {
@@ -170,7 +173,7 @@ export class TransformGrades {
             if (name.length > 0) {
                 Log.warn(`Parsing of score ${field} failed for student ${name}`);
             }
-            return 1;
+            return 0;
         }
     }
 
@@ -231,7 +234,7 @@ export class TransformGrades {
                 const scorePub = Number(result.output.report.scoreTest);
                 const scorePriv = Number((result.output.report.custom as any).private.scoreTest);
                 const scorePubOverall = Number(result.output.report.scoreOverall);
-                // TODO add scorePub/scorePriv to the grade comment
+
                 let finalScore = (scorePub * this.PUB_MULT) + (scorePriv * this.PRIV_MULT);
                 finalScore = Number(finalScore.toFixed(2));
                 Log.info("Updating grade for " + this.DELIVID + "; original: " +
