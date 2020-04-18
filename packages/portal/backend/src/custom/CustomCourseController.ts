@@ -186,6 +186,11 @@ export class CustomCourseController extends CourseController {
             return super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
         }
 
+        if (deliv.id === "release") {
+            Log.info(LOGPRE, "Grade is for 'release' deliverable. Forcing a saved grade.");
+            return true;
+        }
+
         let isMaster = false;
         try {
             const result = await this.resC.getResultFromURL(newGrade.URL, deliv.id);

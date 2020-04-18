@@ -6,7 +6,8 @@ import {DatabaseController} from "../src/controllers/DatabaseController";
 import {GitHubActions} from "../src/controllers/GitHubActions";
 import {GradesController} from "../src/controllers/GradesController";
 
-import {Grade} from "../src/Types";
+import {PersonController} from "../src/controllers/PersonController";
+import {Person, PersonKind} from "../src/Types";
 
 /**
  * Sometimes you want to invoke AutoTest on a series of repositories programmatically.
@@ -28,13 +29,14 @@ import {Grade} from "../src/Types";
 export class InvokeAutoTest {
 
     private dc: DatabaseController;
+    private pc: PersonController;
     /**
      * Only actually performs the action if DRY_RUN is false.
      * Otherwise, just show what _would_ happen.
      * NOTE: this is ignored for the TEST_USER user.
      * @type {boolean}
      */
-    private DRY_RUN = true;
+    private DRY_RUN = false;
 
     /**
      * Usernames to ignore DRY_RUN for (aka usually a TA or course repo for testing)
@@ -47,10 +49,7 @@ export class InvokeAutoTest {
      *
      * @type {boolean}
      */
-    private INVISIBLE = true;
-
-    // for d4 we use the d3 grade to select the commit to run against
-    private readonly DELIVID = 'd3';
+    private INVISIBLE = false;
 
     /**
      * To make this request we are actually transforming a commit URL into an API request URL.
@@ -59,13 +58,13 @@ export class InvokeAutoTest {
      *
      * @type {string}
      */
-    private readonly PREFIXOLD = 'https://github.students.cs.ubc.ca/orgs/CPSC310-2019W-T1/';
-    private readonly PREFIXNEW = 'https://github.students.cs.ubc.ca/api/v3/repos/CPSC310-2019W-T1/';
+    private readonly PREFIXOLD = 'https://github.students.cs.ubc.ca/CPSC310-2019W-T2/';
+    private readonly PREFIXNEW = 'https://github.students.cs.ubc.ca/api/v3/repos/CPSC310-2019W-T2/';
 
     // private readonly MSG = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released.";
     // private readonly MSG  = "@autobot #d1 #force #silent.";
     // private readonly MSG  = "@autobot #d2 #force #silent.";
-    private readonly MSG = "@autobot #d3 #force #silent.";
+    private readonly MSG = "@autobot #release #force #silent.";
     // private readonly MSG = "@autobot #d4 #force #silent.";
     // private readonly MSG  = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released. " +
     //     "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
@@ -74,6 +73,7 @@ export class InvokeAutoTest {
     constructor() {
         Log.info("InvokeAutoTest::<init> - start");
         this.dc = DatabaseController.getInstance();
+        this.pc = new PersonController();
     }
 
     public async process(): Promise<void> {
@@ -83,18 +83,18 @@ export class InvokeAutoTest {
         const gha = GitHubActions.getInstance(true);
 
         // Find the commit you want to invoke the bot against.
-        // e.g., for cs310 d4, we run against the graded d3 commit.
+        // e.g., for cs310 d4, we run against the graded c3 commit.
         // You might use some other approach here; any commit URL
         // will work with the code below.
         const gradesC = new GradesController();
-        Log.info("InvokeAutoTest::process() - requesting grades");
-        const allGrades = await gradesC.getAllGrades(false);
-        Log.info("InvokeAutoTest::process() - # grades retrieved: " + allGrades.length);
+        Log.info("InvokeAutoTest::process() - requesting people");
+        const allPeople = await this.pc.getAllPeople();
+        Log.info("InvokeAutoTest::process() - # people retrieved: " + allPeople.length);
 
-        const grades = [];
-        for (const grade of allGrades as Grade[]) {
-            if (grade.delivId === this.DELIVID) {
-                grades.push(grade);
+        const students = [];
+        for (const student of allPeople as Person[]) {
+            if (student.kind === PersonKind.STUDENT) {
+                students.push(student);
             }
         }
 
@@ -102,11 +102,25 @@ export class InvokeAutoTest {
         // This is needed for multi-student repos as the URL may be identical
         // for multiple students and we only need to invoke the bot once-per-repo.
         const alreadyProcessed: string[] = [];
-        for (const grade of grades) {
-            const url = grade.URL;
+        for (const student of students) {
+            let grade = (await gradesC.getGrade(student.csId, "c3")) ||
+                (await gradesC.getGrade(student.csId, "c2")) ||
+                await gradesC.getGrade(student.csId, "c1");
 
+            while (grade && grade.urlName === "Transformed") {
+                grade = grade.custom.previousGrade;
+            }
+
+            if (grade === null) {
+                Log.error(`InvokeAutoTest::process() - No grade found for ${student.csId}`);
+                continue;
+            } else {
+                Log.info(`InvokeAutoTest::process() - Considering ${grade.delivId} commit for ${student.csId}`);
+            }
+
+            const url = grade.URL;
             if (alreadyProcessed.indexOf(url) >= 0) {
-                // Log.info("InvokeAutoTest::process() - skipping result; already handled: " + url);
+                Log.info("InvokeAutoTest::process() - skipping result; already handled: " + url);
                 continue;
             }
 
