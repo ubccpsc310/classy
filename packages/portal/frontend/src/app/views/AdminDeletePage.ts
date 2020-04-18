@@ -1,17 +1,15 @@
 import {OnsButtonElement} from "onsenui";
 
 import Log from "../../../../../common/Log";
-import {RepositoryTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
+import {RepositoryTransport} from "../../../../../common/types/PortalTypes";
 import {UI} from "../util/UI";
 
 import {AdminPage} from "./AdminPage";
 import {AdminResultsTab} from "./AdminResultsTab";
-import {AdminTeamsTab} from "./AdminTeamsTab";
 import {AdminView} from "./AdminView";
 
 export class AdminDeletePage extends AdminPage {
 
-    private teams: TeamTransport[];
     private repos: RepositoryTransport[];
 
     constructor(remote: string) {
@@ -22,26 +20,13 @@ export class AdminDeletePage extends AdminPage {
         const that = this;
         Log.info('AdminDeletePage::init(..) - start');
 
-        UI.showModal('Retrieving repositories and teams.');
+        UI.showModal('Retrieving repositories.');
 
-        this.teams = await AdminTeamsTab.getTeams(this.remote);
         this.repos = await AdminResultsTab.getRepositories(this.remote);
-
-        this.teams = this.teams.sort(function compare(a: TeamTransport, b: TeamTransport) {
-            return a.id.localeCompare(b.id);
-        });
 
         this.repos = this.repos.sort(function compare(a: RepositoryTransport, b: RepositoryTransport) {
             return a.id.localeCompare(b.id);
         });
-
-        const teamDelete = document.getElementById("teamDeleteSelect") as HTMLSelectElement;
-        teamDelete.innerHTML = '';
-        for (const team of this.teams) {
-            const option = document.createElement("option");
-            option.text = team.id;
-            teamDelete.add(option);
-        }
 
         const repoDelete = document.getElementById("repoDeleteSelect") as HTMLSelectElement;
         repoDelete.innerHTML = '';
@@ -65,16 +50,6 @@ export class AdminDeletePage extends AdminPage {
                 // done
             }).catch(function(err) {
                 Log.error('AdminDeletePage::handleDeliverableDelete(..) - delete pressed ERROR: ' + err.message);
-            });
-        };
-
-        (document.querySelector('#adminDeleteTeamButton') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminDeletePage::handleTeamDelete(..) - button pressed');
-            evt.stopPropagation(); // prevents list item expansion
-            that.deleteTeamPressed().then(function() {
-                // worked
-            }).catch(function(err) {
-                // didn't
             });
         };
 
@@ -142,47 +117,6 @@ export class AdminDeletePage extends AdminPage {
         await this.init({});
     }
 
-    private async deleteTeamPressed(): Promise<void> {
-        const teamDelete = document.getElementById("teamDeleteSelect") as HTMLSelectElement;
-        const selected = [];
-
-        // tslint:disable-next-line
-        for (let i = 0; i < teamDelete.options.length; i++) {
-            const opt = teamDelete.options[i];
-            if (opt.selected) {
-                selected.push(opt.value || opt.text);
-            }
-        }
-
-        Log.info('AdminDeletePage::deleteTeamPressed(..) - start; # teams to delete: ' + selected.length);
-        if (selected.length > 0) {
-            UI.showSuccessToast('Team deletion in progress.');
-        } else {
-            UI.showErrorToast('No teams selected for deletion.');
-        }
-
-        // tslint:disable-next-line
-        for (let i = 0; i < selected.length; i++) {
-            const sel = selected[i];
-            try {
-                await this.deleteTeam(sel);
-                Log.info('AdminDeletePage::deleteTeamPressed(..) - delete complete; team: ' + sel);
-                UI.showSuccessToast('Team deleted: ' + sel + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
-                    {force: true, animation: 'none'});
-            } catch (err) {
-                Log.error('AdminDeletePage::deleteTeamPressed(..) - delete pressed ERROR: ' + err.message);
-                UI.showErrorToast('Team deleted: ' + sel);
-            }
-        }
-
-        Log.info('AdminDeletePage::deleteTeamPressed(..) - done');
-        if (selected.length > 0) {
-            UI.showSuccessToast('Team deletion complete.', {buttonLabel: 'Ok'});
-        }
-        // refresh the page
-        await this.init({});
-    }
-
     private async sanitizeDBPressed(): Promise<void> {
         const dryRun = document.getElementById("adminDeleteSanitizeDBToggle") as HTMLInputElement;
 
@@ -220,13 +154,6 @@ export class AdminDeletePage extends AdminPage {
     private async deleteDeliverable(delivId: string): Promise<boolean> {
         Log.info("AdminDeletePage::deleteDeliverable( " + delivId + " ) - start");
         const url = this.remote + '/portal/admin/deliverable/' + delivId;
-        return await this.performDelete(url);
-    }
-
-    private async deleteTeam(teamId: string): Promise<boolean> {
-        Log.info("AdminDeletePage::deleteTeam( " + teamId + " ) - start");
-
-        const url = this.remote + '/portal/admin/team/' + teamId;
         return await this.performDelete(url);
     }
 
