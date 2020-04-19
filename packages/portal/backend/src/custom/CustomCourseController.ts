@@ -181,14 +181,14 @@ export class CustomCourseController extends CourseController {
         const LOGPRE = "CustomCourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - URL: " + newGrade.URL + " - ";
 
+        if (deliv.id.startsWith("c") === false) {
+            Log.info(LOGPRE, "Grade is not for a regular checkpoint. Forcing a saved grade.");
+            return true;
+        }
+
         if (deliv.id.endsWith("0")) {
             Log.info(LOGPRE + "Grade is for the zeroth deliv; redirecting to default impl");
             return super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
-        }
-
-        if (deliv.id === "release") {
-            Log.info(LOGPRE, "Grade is for 'release' deliverable. Forcing a saved grade.");
-            return true;
         }
 
         let isMaster = false;
