@@ -260,15 +260,16 @@ workflows:
       - build
     # Uncomment if you want to run the Docker-compose workflow in regular pushes
     #   - build_run_stop
-  nightly:
-    triggers:
-      - schedule:
-          # 5am PST time in UTC
-          cron: "0 12 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      # Can add any jobs you want to run at 5am here
-      - build_run_stop
+# Uncomment if you want to enable nightly builds
+#   nightly:
+#     triggers:
+#       - schedule:
+#           # 5am PST time in UTC
+#           cron: "0 12 * * *"
+#           filters:
+#             branches:
+#               only:
+#                 - master
+#     jobs:
+#       # Can add any jobs you want to run at 5am here
+#       - build_run_stop
