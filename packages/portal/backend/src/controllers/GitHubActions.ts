@@ -1210,16 +1210,12 @@ export class GitHubActions implements IGitHubActions {
         }
 
         function getPath(url: string): string {
-            if (seedFilePath) {
-                return seedFilePath;
-            } else {
-                const [cloneUrl, specifiers] = url.split(".git");
-                const [branch, pathSpecifier] = specifiers.split(":");
-                let path = pathSpecifier || "";
-                path = path.startsWith("/") ? path.slice(1) : path;
-                path = path.endsWith("/") ? path.slice(0, -1) : path;
-                return path;
-            }
+            const [cloneUrl, specifiers] = url.split(".git");
+            const [branch, pathSpecifier] = specifiers.split(":");
+            let path = pathSpecifier || "";
+            path = path.startsWith("/") ? path.slice(1) : path;
+            path = path.endsWith("/") ? path.slice(0, -1) : path;
+            return path;
         }
 
         function selectPath(dirPath: string, filePath: string): string {
