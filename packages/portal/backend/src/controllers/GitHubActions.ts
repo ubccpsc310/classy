@@ -1195,6 +1195,8 @@ export class GitHubActions implements IGitHubActions {
         }
 
         function addGithubAuthToken(url: string) {
+            [url] = url.split(".git");
+            url = `${url}.git`;
             const startAppend = url.indexOf('//') + 2;
             const token = that.gitHubAuthToken;
             const authKey = token.substr(token.indexOf('token ') + 6) + '@';
