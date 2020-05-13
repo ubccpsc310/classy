@@ -1202,10 +1202,29 @@ export class GitHubActions implements IGitHubActions {
             return url.slice(0, startAppend) + authKey + url.slice(startAppend);
         }
 
+        function getImportBranch(url: string): string {
+            const [cloneUrl, specifiers] = url.split("#");
+            const [branch, path] = (specifiers || "").split(":");
+            return branch;
+        }
+
+        function getPath(url: string): string {
+            if (seedFilePath) {
+                return seedFilePath;
+            } else {
+                const [cloneUrl, specifiers] = url.split(".git");
+                const [branch, pathSpecifier] = specifiers.split(":");
+                const path = pathSpecifier || "";
+                return path.startsWith("/") ? `.${path}` : path;
+            }
+        }
+
         const exec = require('child-process-promise').exec;
         const cloneTempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
         const authedStudentRepo = addGithubAuthToken(studentRepo);
         const authedImportRepo = addGithubAuthToken(importRepo);
+        const importBranch = getImportBranch(importRepo);
+        seedFilePath = getPath(importRepo);
         // this was just a github-dev testing issue; we might need to consider using per-org import test targets or something
         // if (importRepo === 'https://github.com/SECapstone/capstone' || importRepo === 'https://github.com/SECapstone/bootstrap') {
         //     authedImportRepo = importRepo; // HACK: for testing
@@ -1215,9 +1234,9 @@ export class GitHubActions implements IGitHubActions {
             const seedTempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
             // First clone to a temporary directory, then move only the required files
             return cloneRepo(seedTempDir.path).then(() => {
-                return moveFiles(seedTempDir.path, seedFilePath, cloneTempDir.path)
+                return checkout(seedTempDir.path, importBranch)
                     .then(() => {
-                        return enterRepoPath();
+                        return moveFiles(seedTempDir.path, seedFilePath, cloneTempDir.path);
                     }).then(() => {
                         return removeGitDir();
                     }).then(() => {
@@ -1243,7 +1262,7 @@ export class GitHubActions implements IGitHubActions {
             });
         } else {
             return cloneRepo(cloneTempDir.path).then(() => {
-                return enterRepoPath()
+                return checkout(cloneTempDir.path, importBranch)
                     .then(() => {
                         return removeGitDir();
                     }).then(() => {
@@ -1288,14 +1307,19 @@ export class GitHubActions implements IGitHubActions {
                 });
         }
 
-        function enterRepoPath() {
-            Log.info('GitHubActions::importRepoFS(..)::enterRepoPath() - entering: ' + cloneTempDir.path);
-            return exec(`cd ${cloneTempDir.path}`)
-                .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::enterRepoPath() - done');
-                    that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::enterRepoPath()');
-                    that.reportStdErr(result.stderr, 'importRepoFS(..)::enterRepoPath()');
-                });
+        function checkout(repoPath: string, branch: string) {
+            if (branch) {
+                Log.info(`GitHubActions::importRepoFS(..)::checkout() - Checking out "${branch}"`);
+                return exec(`cd ${repoPath} && git checkout ${branch}`)
+                    .then(function(result: any) {
+                        Log.info('GitHubActions::importRepoFS(..)::checkout() - done');
+                        that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::checkout()');
+                        that.reportStdErr(result.stderr, 'importRepoFS(..)::checkout()');
+                    });
+            } else {
+                Log.info(`GitHubActions::importRepoFS(..)::checkout() - Using default branch`);
+                return Promise.resolve();
+            }
         }
 
         function removeGitDir() {
