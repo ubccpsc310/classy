@@ -1222,24 +1222,35 @@ export class GitHubActions implements IGitHubActions {
             }
         }
 
+        function selectPath(dirPath: string, filePath: string): string {
+            let finalPath = filePath;
+            if (dirPath && filePath) {
+                finalPath = `${dirPath}/${filePath}`;
+            } else if (dirPath) {
+                finalPath = `${dirPath}/*`;
+            }
+            return finalPath;
+        }
+
         const exec = require('child-process-promise').exec;
         const cloneTempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
         const authedStudentRepo = addGithubAuthToken(studentRepo);
         const authedImportRepo = addGithubAuthToken(importRepo);
         const importBranch = getImportBranch(importRepo);
-        seedFilePath = getPath(importRepo);
+        const urlPath = getPath(importRepo);
+        const importPath = selectPath(urlPath, seedFilePath);
         // this was just a github-dev testing issue; we might need to consider using per-org import test targets or something
         // if (importRepo === 'https://github.com/SECapstone/capstone' || importRepo === 'https://github.com/SECapstone/bootstrap') {
         //     authedImportRepo = importRepo; // HACK: for testing
         // }
 
-        if (typeof seedFilePath === "string" && seedFilePath !== "") {
+        if (typeof importPath === "string" && importPath !== "") {
             const seedTempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
             // First clone to a temporary directory, then move only the required files
             return cloneRepo(seedTempDir.path).then(() => {
                 return checkout(seedTempDir.path, importBranch)
                     .then(() => {
-                        return moveFiles(seedTempDir.path, seedFilePath, cloneTempDir.path);
+                        return moveFiles(seedTempDir.path, importPath, cloneTempDir.path);
                     }).then(() => {
                         return removeGitDir();
                     }).then(() => {
@@ -1292,7 +1303,7 @@ export class GitHubActions implements IGitHubActions {
         function moveFiles(originPath: string, filesLocation: string, destPath: string) {
             Log.info('GitHubActions::importRepoFS(..)::moveFiles( ' + originPath + ', '
                 + filesLocation + ', ' + destPath + ') - moving files');
-            return exec(`cp -r ${originPath}/${filesLocation}/* ${destPath}`)
+            return exec(`cp -r ${originPath}/${filesLocation} ${destPath}`)
                 .then(function(result: any) {
                     Log.info('GitHubActions::importRepoFS(..)::moveFiles(..) - done');
                     that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::moveFiles(..)');
