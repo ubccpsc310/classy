@@ -1215,8 +1215,9 @@ export class GitHubActions implements IGitHubActions {
             } else {
                 const [cloneUrl, specifiers] = url.split(".git");
                 const [branch, pathSpecifier] = specifiers.split(":");
-                const path = pathSpecifier || "";
-                return path.startsWith("/") ? `.${path}` : path;
+                let path = pathSpecifier || "";
+                path = path.startsWith("/") ? path.slice(1) : path;
+                path = path.endsWith("/") ? path.slice(0, -1) : path;
             }
         }
 
@@ -1290,7 +1291,7 @@ export class GitHubActions implements IGitHubActions {
         function moveFiles(originPath: string, filesLocation: string, destPath: string) {
             Log.info('GitHubActions::importRepoFS(..)::moveFiles( ' + originPath + ', '
                 + filesLocation + ', ' + destPath + ') - moving files');
-            return exec(`cp -r ${originPath}/${filesLocation} ${destPath}`)
+            return exec(`cp -r ${originPath}/${filesLocation}/* ${destPath}`)
                 .then(function(result: any) {
                     Log.info('GitHubActions::importRepoFS(..)::moveFiles(..) - done');
                     that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::moveFiles(..)');
