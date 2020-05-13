@@ -1233,7 +1233,7 @@ export class GitHubActions implements IGitHubActions {
         //     authedImportRepo = importRepo; // HACK: for testing
         // }
 
-        if (seedFilePath) {
+        if (typeof seedFilePath === "string" && seedFilePath !== "") {
             const seedTempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
             // First clone to a temporary directory, then move only the required files
             return cloneRepo(seedTempDir.path).then(() => {
@@ -1311,7 +1311,7 @@ export class GitHubActions implements IGitHubActions {
         }
 
         function checkout(repoPath: string, branch: string) {
-            if (branch) {
+            if (typeof branch === "string" && branch !== "") {
                 Log.info(`GitHubActions::importRepoFS(..)::checkout() - Checking out "${branch}"`);
                 return exec(`cd ${repoPath} && git checkout ${branch}`)
                     .then(function(result: any) {
