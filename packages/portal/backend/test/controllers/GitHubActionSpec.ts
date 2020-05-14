@@ -458,12 +458,12 @@ describe("GitHubActions", () => {
             // Should support a subdirectory with "/" on either side
             [Test.REPONAMEREAL_TESTINGSAMPLE + ".git:/" + Test.REPOSUBDIRREAL_TESTINGSAMPLE + "/", undefined],
             // Should support a subdirectory with a seedFile
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git:" + Test.REPOSUBDIRREAL_TESTINGSAMPLE, "NESTED.txt"],
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git:" + Test.REPOSUBDIRREAL_TESTINGSAMPLE,
+                Test.REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE],
             // Should support importing from a branch
             [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE, undefined],
             // Should support importing from a branch with a seedFile
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE,
-                Test.REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE],
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE, "FILE.txt"],
             // Should support importing from a subdir on a branch
             [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE + ":" +
                 Test.REPOSUBDIRREAL_TESTINGSAMPLE, undefined],
