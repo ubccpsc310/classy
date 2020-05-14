@@ -1,6 +1,8 @@
 import * as parse from 'csv-parse';
 import * as fs from 'fs';
-import * as rp from "request-promise-native";
+import * as https from 'https';
+import fetch, { RequestInit } from "node-fetch";
+
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from '../../../../../common/Log';
 
@@ -27,10 +29,10 @@ export class ClasslistAgent {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0' // for testing
                 },
-                uri,
-                rejectUnauthorized: false
+                agent:              new https.Agent({ rejectUnauthorized: false })
             };
-            return JSON.parse(await rp(options));
+            const res = await fetch(uri, options);
+            return res.json();
         } catch (err) {
             Log.error("ClasslistAgent::fetchClasslist - ERROR: " + err);
             throw new Error("Could not fetch Classlist " + err.message);
@@ -113,17 +115,17 @@ export class ClasslistAgent {
         for (const row of data) {
             // Log.trace(JSON.stringify(row));
             if (typeof row.ACCT !== 'undefined' && typeof row.CWL !== 'undefined' &&
-                typeof row.SNUM !== 'undefined' && typeof row.FIRST !== 'undefined' &&
-                typeof row.LAST !== 'undefined' && typeof row.LAB !== 'undefined') {
+                typeof row.SNUM !== 'undefined' && typeof row.LAST !== 'undefined' &&
+                typeof row.LAB !== 'undefined' &&
+                (typeof row.FIRST !== 'undefined' || typeof row.PREF !== 'undefined')) {
                 const p: Person = {
                     id:            row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
                     csId:          row.ACCT.toLowerCase(),
                     // github.ugrad.cs wanted row.ACCT; github.students.cs and github.ubc want row.CWL
                     githubId:      row.CWL.toLowerCase(),
                     studentNumber: row.SNUM,
-                    fName:         row.FIRST,
+                    fName:         row.PREF || row.FIRST,
                     lName:         row.LAST,
-
                     kind:   PersonKind.STUDENT,
                     URL:    null,
                     labId:  row.LAB,
