@@ -100,24 +100,21 @@ export class GradingJob {
 
         const stdio = fs.createWriteStream(this.path + "/staff/stdio.txt");
         const stream = await container.attach({stream: true, stdout: true, stderr: true});
-        container.modem.demuxStream(stream, stdio, stdio);
+        stream.pipe(stdio);
 
         const exitCode = await GradingJob.runContainer(container, maxExecTime);
 
         const out = this.record.output;
-
-        try {
-            // Shouldn't always postback on exitcode -1, as could have timed out _after_ report was made
-            const shouldPostback: boolean = exitCode !== 0 && exitCode !== -1;
-            out.report = await fs.readJson(this.path + "/staff/report.json");
-            out.postbackOnComplete = shouldPostback;
-            out.state = ContainerState.SUCCESS;
-        } catch (err) {
-            out.postbackOnComplete = true;
-            if (exitCode === -1) {
-                out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
-                out.state = ContainerState.TIMEOUT;
-            } else {
+        if (exitCode === -1) {
+            out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
+            out.state = ContainerState.TIMEOUT;
+        } else {
+            try {
+                const shouldPostback: boolean = exitCode !== 0;
+                out.report = await fs.readJson(this.path + "/staff/report.json");
+                out.postbackOnComplete = shouldPostback;
+                out.state = ContainerState.SUCCESS;
+            } catch (err) {
                 Log.error("GradeWorker::execute() - ERROR Reading grade report. " + err);
                 out.report.feedback = "Failed to read grade report.";
                 out.state = ContainerState.NO_REPORT;
