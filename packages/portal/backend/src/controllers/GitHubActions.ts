@@ -1163,27 +1163,42 @@ export class GitHubActions implements IGitHubActions {
         }
 
         function addGithubAuthToken(url: string) {
-            [url] = url.split(".git");
-            const startAppend = url.indexOf('//') + 2;
-            const token = that.gitHubAuthToken;
-            const authKey = token.substr(token.indexOf('token ') + 6) + '@';
-            // creates "longokenstring@githuburi"
-            return url.slice(0, startAppend) + authKey + url.slice(startAppend);
+            try {
+                [url] = url.split(".git");
+                const startAppend = url.indexOf('//') + 2;
+                const token = that.gitHubAuthToken;
+                const authKey = token.substr(token.indexOf('token ') + 6) + '@';
+                // creates "longokenstring@githuburi"
+                return url.slice(0, startAppend) + authKey + url.slice(startAppend);
+            } catch (err) {
+                Log.error('GitHubActions::importRepoFS(..)::addGithubAuthToken() - Unexpected error', err);
+                return '';
+            }
         }
 
         function getImportBranch(url: string): string {
-            const [cloneUrl, specifiers] = url.split("#");
-            const [branch, path] = (specifiers || "").split(":");
-            return branch;
+            try {
+                const [cloneUrl, specifiers] = url.split("#");
+                const [branch, path] = (specifiers || "").split(":");
+                return branch;
+            } catch (err) {
+                Log.error('GitHubActions::importRepoFS(..)::getImportBranch() - Unexpected error', err);
+                return '';
+            }
         }
 
         function getPath(url: string): string {
-            const [cloneUrl, specifiers] = url.split(".git");
-            const [branch, pathSpecifier] = specifiers.split(":");
-            let path = pathSpecifier || "";
-            path = path.startsWith("/") ? path.slice(1) : path;
-            path = path.endsWith("/") ? path.slice(0, -1) : path;
-            return path;
+            try {
+                const [cloneUrl, specifiers] = url.split(".git");
+                const [branch, pathSpecifier] = specifiers.split(":");
+                let path = pathSpecifier || "";
+                path = path.startsWith("/") ? path.slice(1) : path;
+                path = path.endsWith("/") ? path.slice(0, -1) : path;
+                return path;
+            } catch (err) {
+                Log.error('GitHubActions::importRepoFS(..)::getPath() - Unexpected error', err);
+                return '';
+            }
         }
 
         function selectPath(dirPath: string, filePath: string): string {
