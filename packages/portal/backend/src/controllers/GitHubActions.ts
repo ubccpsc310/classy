@@ -1190,7 +1190,7 @@ export class GitHubActions implements IGitHubActions {
         function getPath(url: string): string {
             try {
                 const [cloneUrl, specifiers] = url.split(".git");
-                const [branch, pathSpecifier] = specifiers.split(":");
+                const [branch, pathSpecifier] = (specifiers || "").split(":");
                 let path = pathSpecifier || "";
                 path = path.startsWith("/") ? path.slice(1) : path;
                 path = path.endsWith("/") ? path.slice(0, -1) : path;

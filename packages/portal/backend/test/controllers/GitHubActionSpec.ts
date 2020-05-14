@@ -462,7 +462,8 @@ describe("GitHubActions", () => {
             // Should support importing from a branch
             [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE, undefined],
             // Should support importing from a branch with a seedFile
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE, "FILE.txt"],
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE,
+                Test.REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE],
             // Should support importing from a subdir on a branch
             [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE + ":" +
                 Test.REPOSUBDIRREAL_TESTINGSAMPLE, undefined],
