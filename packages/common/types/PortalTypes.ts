@@ -6,7 +6,6 @@
  * All fields should be primitives.
  */
 import {AutoTestResult} from "./AutoTestTypes";
-import {ClusteredResult} from "./ContainerTypes";
 
 export interface FailurePayload {
     message: string;
@@ -322,7 +321,6 @@ export interface AutoTestDashboardTransport extends AutoTestResultSummaryTranspo
     testFail: string[];
     testSkip: string[];
     testError: string[];
-    cluster?: ClusteredResult;
 }
 
 export interface ClasslistTransport {
@@ -349,6 +347,7 @@ export enum TransportKind {
     TEAM,
     TEAM_FORMATION,
     GRADE,
+    GRADE_REPORT, // TODO Should this be here? GradeReport is a ContainerType
     AUTOTEST_DASHBOARD,
     AUTOTEST_RESULT_SUMMARY,
     CLASSLIST,
