@@ -225,7 +225,6 @@ export class CustomCourseController extends CourseController {
      * @param kind
      */
     public forwardCustomFields(record: any, kind: TransportKind): {[key: string]: any} {
-        // TODO move clusters into custom to be forwarded
         const custom: any = {};
         if (kind === TransportKind.AUTOTEST_RESULT_SUMMARY) {
             const result: Result = record as Result;
@@ -234,6 +233,8 @@ export class CustomCourseController extends CourseController {
                 custom["studentTestCount"] = result.output.report.custom["studentTestCount"];
                 custom["ref"] = result.input.target.ref;
             }
+        } else if (kind === TransportKind.GRADE_REPORT) {
+            custom.cluster = record.custom.cluster;
         }
         return custom;
     }
