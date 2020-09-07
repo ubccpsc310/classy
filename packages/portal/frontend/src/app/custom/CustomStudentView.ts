@@ -126,7 +126,7 @@ export class ClassyStudentView extends AbstractStudentView {
         // If the result of calling /portal/grades is null, AbstractStudentView sets
         // the value of this.grades to be an empty array
         const checkPointOneExists = (transport: GradeTransport): boolean => {
-            return transport.delivId === "c1" && (transport.score === 0 || transport.score === undefined);
+            return transport.delivId === "c1" && (transport.score >= 0 || transport.score === undefined);
         };
         if (this.grades.length !== 0 && this.grades.find(checkPointOneExists) !== undefined) {
             UI.showSection('studentSelectPartnerDiv');
