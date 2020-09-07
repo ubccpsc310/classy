@@ -1,6 +1,6 @@
 import {OnsButtonElement} from "onsenui";
 import Log from "../../../../../common/Log";
-import {Payload, TeamFormationTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
+import {GradeTransport, Payload, TeamFormationTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
 
 import {UI} from "../util/UI";
 import {AbstractStudentView} from "../views/AbstractStudentView";
@@ -111,8 +111,7 @@ export class ClassyStudentView extends AbstractStudentView {
                     Log.info('CustomStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
                 });
             };
-
-            UI.showSection('studentSelectPartnerDiv');
+            this.renderPartnerSelect();
         } else {
             // already on team
             UI.showSection('studentPartnerDiv');
@@ -120,6 +119,17 @@ export class ClassyStudentView extends AbstractStudentView {
             const team = projectTeam;
             // TODO: this should be Member CWLs; but TeamTransport will need to be changed for that
             teamElement.innerHTML = team.id + ' - Member CSIDs: ' + JSON.stringify(team.people);
+        }
+    }
+
+    private renderPartnerSelect(): void {
+        // If the result of calling /portal/grades is null, AbstractStudentView sets
+        // the value of this.grades to be an empty array
+        const checkPointOneExists = (transport: GradeTransport): boolean => {
+            return transport.delivId === "c1" && (transport.score === 0 || transport.score === undefined);
+        };
+        if (this.grades.length !== 0 && this.grades.find(checkPointOneExists) !== undefined) {
+            UI.showSection('studentSelectPartnerDiv');
         }
     }
 
