@@ -408,33 +408,4 @@ export class ClassPortal implements IClassPortal {
         Log.trace(`ClassPortal::shouldPromotePush(${info.commitSHA}): ${shouldPromote}; Took: ${Util.took(start)}`);
         return shouldPromote;
     }
-
-    private async getMedianTime(delivId: string): Promise<string> {
-        const url = this.host + ":" + this.port + "/portal/at/median/" + delivId;
-        const start = Date.now();
-
-        Log.info("ClassPortal::getMedianTime(..) - requesting from: " + url);
-
-        const opts: RequestInit = {
-            agent: new https.Agent({ rejectUnauthorized: false }), headers: {
-                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
-            }
-        };
-
-        try {
-            const res = await fetch(url, opts);
-            Log.info("ClassPortal::getMedianTime( " + delivId + " ) - success; took: " + Util.took(start));
-            const json: any = await res.json() as any;
-            if (typeof json.success !== 'undefined') {
-                return Util.tookHuman(0, json.success);
-            } else {
-                Log.warn("ClassPortal::getMedianTime(..) - ERROR: " + JSON.stringify(json));
-                return "";
-            }
-        } catch (err) {
-            Log.error("ClassPortal::getMedianTime(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return "";
-        }
-    }
-
 }
