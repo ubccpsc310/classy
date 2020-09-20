@@ -4,6 +4,7 @@ import fetch, {RequestInit} from "node-fetch";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../../common/types/ContainerTypes";
 import {
     AutoTestAuthPayload,
     AutoTestAuthTransport,
@@ -94,6 +95,15 @@ export interface IClassPortal {
      * @returns {Promise<Payload>}
      */
     formatFeedback(res: AutoTestResultTransport): Promise<string | null>;
+
+    /**
+     * Asks class portal if a commit should be promoted the the express queue without a comment event
+     * The default implementation in portal just sends false, but courses can extend this behaviour
+     * using their CustomCourseController class.
+     * @param {CommitTarget} info
+     * @return {Promise<boolean>}
+     */
+    shouldPromotePush(info: CommitTarget): Promise<boolean>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -364,6 +374,39 @@ export class ClassPortal implements IClassPortal {
             Log.error("ClassPortal::getResult(..) - ERROR; url: " + url + "; ERROR: " + err);
             return null;
         }
+    }
+
+    public async shouldPromotePush(info: CommitTarget): Promise<boolean> {
+        const url = `${this.host}:${this.port}/portal/at/promotePush`;
+        const start = Date.now();
+        let shouldPromote = false;
+
+        Log.trace(`ClassPortal::shouldPromotePush(..) - Start for commit ${info.commitSHA}`);
+
+        try {
+            const opts: RequestInit = {
+                agent: new https.Agent({ rejectUnauthorized: false }),
+                method:             'POST',
+                headers:            {
+                    "Content-Type": "application/json",
+                    "token":        Config.getInstance().getProp(ConfigKey.autotestSecret)
+                },
+                body:               JSON.stringify(info)
+            };
+
+            const response = await fetch(url, opts);
+            const json = await response.json();
+            if (json.success !== undefined && typeof json.success.shouldPromote === "boolean") {
+                shouldPromote = json.success.shouldPromote;
+            } else {
+                Log.error("ClassPortal::shouldPromotePush(..) - ERROR (bad response); Defaulting to no promotion", json);
+            }
+        } catch (err) {
+            Log.error("ClassPortal::shouldPromotePush(..) - ERROR (making request); Defaulting to no promotion", err);
+        }
+
+        Log.trace(`ClassPortal::shouldPromotePush(${info.commitSHA}): ${shouldPromote}; Took: ${Util.took(start)}`);
+        return shouldPromote;
     }
 
     private async getMedianTime(delivId: string): Promise<string> {
