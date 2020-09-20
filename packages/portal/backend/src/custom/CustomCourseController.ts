@@ -1,4 +1,5 @@
 import Log from "../../../../common/Log";
+import {CommitTarget} from "../../../../common/types/ContainerTypes";
 import {TransportKind} from "../../../../common/types/PortalTypes";
 import {CourseController} from "../controllers/CourseController";
 import {DatabaseController} from "../controllers/DatabaseController";
@@ -217,6 +218,23 @@ export class CustomCourseController extends CourseController {
             Log.trace("CustomCourseController::finalizeProvisionedRepo( " + repo.id + " ) - Protecting master");
             return this.gh.updateBranchProtection(repo, [{name: "master", reviews: 1}]);
         }
+    }
+
+    /**
+     * Extends the default behaviour: prioritizes pushes to master
+     * @param info
+     */
+    public async shouldPrioritizePushEvent(info: CommitTarget): Promise<boolean> {
+        Log.info(`CustomCourseController::shouldPrioritizePushEvent(${info.commitSHA}) - start`);
+        let shouldPrioritize = false;
+        if (info.delivId.endsWith("0")) {
+            Log.trace(`CustomCourseController::shouldPrioritizePushEvent(${info.commitSHA}) - Zeroth deliv - false`);
+        } else if (info.ref === "refs/heads/master" && info.repoId?.startsWith("project_")) {
+            Log.trace(`CustomCourseController::shouldPrioritizePushEvent(${info.commitSHA}) - Is master push`);
+            shouldPrioritize = true;
+        }
+        Log.info(`CustomCourseController::shouldPrioritizePushEvent(${info.commitSHA}): ${shouldPrioritize};`);
+        return shouldPrioritize;
     }
 
     /**

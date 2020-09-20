@@ -18,6 +18,7 @@ import Util from "../../../../../common/Util";
 import {AdminController} from "../../controllers/AdminController";
 import {AuthController} from "../../controllers/AuthController";
 
+import {CommitTarget} from "../../../../../common/types/ContainerTypes";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
@@ -25,6 +26,7 @@ import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {ResultsController} from "../../controllers/ResultsController";
+import {Factory} from "../../Factory";
 import IREST from "../IREST";
 
 /**
@@ -50,6 +52,8 @@ export class AutoTestRoutes implements IREST {
 
         server.get('/portal/at/docker/images', AutoTestRoutes.getDockerImages);
         server.post('/portal/at/docker/image', AutoTestRoutes.postDockerImage);
+
+        server.post('/portal/at/promotePush', AutoTestRoutes.atShouldPromotePush);
     }
 
     public static handleError(code: number, msg: string, res: any, next: any) {
@@ -352,6 +356,26 @@ export class AutoTestRoutes implements IREST {
             }).catch(function(err) {
                 return AutoTestRoutes.handleError(400, 'Error retrieving result record: ' + err.message, res, next);
             });
+        }
+    }
+
+    public static async atShouldPromotePush(req: any, res: any, next: any) {
+        Log.info("AutoTestRoutes::atShouldPromotePush(..) - start");
+
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            return AutoTestRoutes.handleError(400, `Invalid AutoTest Secret: ${providedSecret}`, res, next);
+        } else {
+            try {
+                const info: CommitTarget = req.body;
+                const courseController = await Factory.getCourseController();
+                const shouldPromote = await courseController.shouldPrioritizePushEvent(info);
+                const payload: Payload = {success: {shouldPromote}};
+                res.send(200, payload);
+                return next(true);
+            } catch (err) {
+                return AutoTestRoutes.handleError(400, `Failed to find push promotion details`, res, next);
+            }
         }
     }
 
