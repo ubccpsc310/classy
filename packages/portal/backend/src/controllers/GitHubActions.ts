@@ -1613,11 +1613,12 @@ export class GitHubActions implements IGitHubActions {
      * @param rule
      */
     public async addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean> {
+        // TODO this code has no unit tests
         Log.info("GitHubAction::addBranchProtectionRule(..) - start; repo:", repoId, "; branch:", rule.name);
         const start = Date.now();
         try {
             const uri = `${this.apiPath}/repos/${this.org}/${repoId}/branches/${rule.name}/protection`;
-            const body: any = {
+            const body = JSON.stringify({
                 required_status_checks: null,
                 enforce_admins: null,
                 required_pull_request_reviews: {
@@ -1627,7 +1628,7 @@ export class GitHubActions implements IGitHubActions {
                     required_approving_review_count: rule.reviews
                 },
                 restrictions: null
-            };
+            });
             const options: RequestInit = {
                 method:                  'PUT',
                 headers:                 {
