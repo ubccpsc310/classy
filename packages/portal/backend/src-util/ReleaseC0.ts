@@ -170,7 +170,7 @@ export class ReleaseC0 {
 }
 
 interface RetroScoreMap {
-    [id: string]: {feedback: string, score: number}
+    [id: string]: {feedback: string, score: number};
 }
 
 const ppt = new ReleaseC0();
