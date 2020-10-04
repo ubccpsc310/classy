@@ -30,7 +30,7 @@ export class ReleaseC0 {
      *
      * @type {boolean}
      */
-    private DRY_RUN = false;
+    private DRY_RUN = true;
 
     /**
      * A test user that can be used for checking DB writing (ignores DRY_RUN above, but only for this user).
