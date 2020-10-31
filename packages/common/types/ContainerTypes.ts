@@ -29,7 +29,7 @@ export interface ContainerOutput {
     report: GradeReport;
     postbackOnComplete: boolean;
     state: ContainerState;
-    custom: {};
+    custom: {[key: string]: any};
     // Used to retrieve attachments for the particular grading run.
     graderTaskId: string;
 }

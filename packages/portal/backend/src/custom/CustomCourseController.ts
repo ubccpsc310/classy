@@ -214,6 +214,9 @@ export class CustomCourseController extends CourseController {
         if (repo.delivId.endsWith("0")) {
             Log.trace("CustomCourseController::finalizeProvisionedRepo( " + repo.id + " ) - Zeroth deliv needs no rule");
             return true;
+        } else if (teams.some((team) => team.personIds.length === 1)) {
+            Log.trace("CustomCourseController::finalizeProvisionedRepo( " + repo.id + " ) - Contains a 1 person team. No reviews needed");
+            return this.gh.updateBranchProtection(repo, [{name: "master", reviews: 0}]);
         } else {
             Log.trace("CustomCourseController::finalizeProvisionedRepo( " + repo.id + " ) - Protecting master");
             return this.gh.updateBranchProtection(repo, [{name: "master", reviews: 1}]);
