@@ -54,7 +54,7 @@ export abstract class ReleaseCheckpoint {
 
     protected retroScores: RetroScoreMap;
 
-    private parserOptions = {
+    protected parserOptions = {
         columns:          true,
         skip_empty_lines: true,
         trim:             true
@@ -93,8 +93,12 @@ export abstract class ReleaseCheckpoint {
         }
         const score = retroEntry?.score ?? 0;
         const feedback = retroEntry?.feedback ?? "";
+        const missingForm = retroEntry?.missingForm ?? false;
 
         let retroComment = `Retrospective Score: ${score}`;
+        if (missingForm) {
+            retroComment += "; No Contribution Form Submitted"
+        }
         if (feedback !== "") {
             retroComment += `; TA Feedback: ${feedback}`;
         }
@@ -206,5 +210,5 @@ export abstract class ReleaseCheckpoint {
 }
 
 export interface RetroScoreMap {
-    [id: string]: {feedback: string, score: number};
+    [id: string]: {feedback: string, score: number, missingForm: boolean};
 }

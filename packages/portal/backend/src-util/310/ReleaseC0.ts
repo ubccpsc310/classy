@@ -2,7 +2,7 @@ import Log, {LogLevel} from "../../../../common/Log";
 import Util from "../../../../common/Util";
 
 import {Grade, Result} from "../../src/Types";
-import {ReleaseCheckpoint} from "./ReleaseCheckpoint";
+import {ReleaseCheckpoint, RetroScoreMap} from "./ReleaseCheckpoint";
 
 /**
  * To run this locally you need to have a .env configured with the production values
@@ -49,7 +49,7 @@ export class ReleaseC0 extends ReleaseCheckpoint {
             const csid = record["Q8"].toLowerCase();
             const feedback = record["Q6"].toLowerCase();
             const score = 1;
-            const entry = {feedback, score};
+            const entry = {feedback, score, missingForm: false};
             retroMap[cwl] = entry;
             retroMap[csid] = entry;
         }
@@ -64,10 +64,6 @@ export class ReleaseC0 extends ReleaseCheckpoint {
         return grade;
     }
 
-}
-
-interface RetroScoreMap {
-    [id: string]: {feedback: string, score: number};
 }
 
 const ppt = new ReleaseC0();

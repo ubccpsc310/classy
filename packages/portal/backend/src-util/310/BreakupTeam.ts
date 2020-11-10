@@ -1,6 +1,6 @@
 import * as csvParse from "csv-parse/lib/sync";
 import * as fs from "fs-extra";
-import Log from "../../../../common/Log";
+import Log, {LogLevel} from "../../../../common/Log";
 import {TeamFormationTransport} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {GitHubActions, IGitHubActions} from "../../src/controllers/GitHubActions";
@@ -29,7 +29,7 @@ interface ResponseMap {
 
 const DRY_RUN: boolean = true;
 const DELIV = "project";
-const RETRO_PATH = __dirname + "/c1retros.csv";
+const RETRO_PATH = __dirname + "/c2retros.csv";
 
 const parserOptions = {
     columns:          true,
@@ -138,6 +138,7 @@ async function removeStudentsWhoWantOut(team: Team): Promise<void>  {
 
 // tslint:disable-next-line
 (async () => {
+    Log.Level = LogLevel.INFO;
     responseMap = loadRetroScores();
     const teams = await teamsController.getAllTeams();
     const delivTeams = teams.filter((t) => t.delivId === DELIV);
@@ -147,9 +148,10 @@ async function removeStudentsWhoWantOut(team: Team): Promise<void>  {
     Log.info(`New team total: ${newTeamCount}`);
 
     const updatedTeams = await teamsController.getAllTeams();
-    const emptyUpdatedDelivTeams = teams.filter((t) => t.delivId === DELIV && t.personIds.length === 0);
+    const emptyUpdatedDelivTeams = updatedTeams.filter((t) => t.delivId === DELIV && t.personIds.length === 0);
     for (const emptyTeam of emptyUpdatedDelivTeams) {
         await deleteTeam(emptyTeam);
     }
     Log.info(`Deleted ${emptyUpdatedDelivTeams.length} teams`);
+    process.exit(0);
 })();

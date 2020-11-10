@@ -1,3 +1,4 @@
+import * as csvParse from 'csv-parse/lib/sync';
 import * as fs from "fs-extra";
 import Log from "../../../../common/Log";
 import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
@@ -14,7 +15,6 @@ export abstract class ReleasePubPrivCheckpoint extends ReleaseCheckpoint {
     protected abstract readonly PUBLIC_TEST_COUNT: number;
     protected abstract readonly PRIVATE_TEST_COUNT: number;
     protected abstract readonly TERM: string;
-    protected abstract readonly COLUMN_GROUPS: Array<[string, string, string]>;
     protected abstract readonly CONTRIBUTION_PATH: string;
 
     constructor() {
@@ -119,25 +119,47 @@ export abstract class ReleasePubPrivCheckpoint extends ReleaseCheckpoint {
     protected loadRetroScores(): RetroScoreMap {
         const data = this.loadRetroData();
         const contributionData = this.getContributionData();
-        const retroMap: RetroScoreMap = {};
+        let retroMap: RetroScoreMap = {};
         for (const record of data) {
-            for (const [csidCol, scoreCol, fbCol] of this.COLUMN_GROUPS) {
-                const csid = record[csidCol].toLowerCase();
-                let score = Number(record[scoreCol]);
-                let feedback = record[fbCol];
-                if (!contributionData.has(csid)) {
-                    score = Math.min(score, 0.8);
-                    feedback = `${feedback ? "; " : ""}No Retro Survey Form Submitted`;
-                }
-                retroMap[csid] = {feedback, score};
-            }
+            const partialMap = this.handleRetroRecord(record, contributionData);
+            retroMap = {...retroMap, ...partialMap};
         }
         return retroMap;
     }
 
+    protected abstract handleRetroRecord(record: {[column: string]: string}, contributionData: Set<string>): RetroScoreMap;
+
+    protected handleRetroForPerson(
+        record: {[column: string]: string},
+        contributionData: Set<string>,
+        columns: [string, string, string],
+        forceBonus: boolean = false): {csid: string, retro: {feedback: string, score: number, missingForm: boolean}} {
+
+        const [csidCol, scoreCol, fbCol] = columns;
+
+        const csid = record[csidCol].toLowerCase();
+        let score = Number(record[scoreCol]);
+        let missingForm = false;
+        let feedback = record[fbCol];
+        if (!contributionData.has(csid)) {
+            score = Math.min(score, 0.8);
+            missingForm = true;
+        }
+
+        if (forceBonus) {
+            score = 1.3;
+        }
+        return {csid, retro: {feedback, score, missingForm}};
+    }
+
     private getContributionData(): Set<string> {
         const contributionCSV = fs.readFileSync(this.CONTRIBUTION_PATH);
-        // TODO
-        return new Set<string>();
+        const studentIds = new Set<string>();
+        const data = csvParse(contributionCSV, this.parserOptions);
+        for (const record of data) {
+            studentIds.add(record["Q27_4"]);
+            studentIds.add(record["Q27_5"]);
+        }
+        return studentIds;
     }
 }
