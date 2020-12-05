@@ -1,9 +1,7 @@
-import Log, {LogLevel} from "../../../../common/Log";
-import Util from "../../../../common/Util";
 import {RetroScoreMap} from "./ReleaseCheckpoint";
 import {ReleasePubPrivCheckpoint} from "./ReleasePubPrivCheckpoint";
 
-class ReleaseC2 extends ReleasePubPrivCheckpoint {
+export class ReleaseC2 extends ReleasePubPrivCheckpoint {
     protected readonly DELIVID: string = "c2";
     protected readonly DRY_RUN: boolean = true;
     protected readonly TEST_USER: string = "XXXX";
@@ -28,14 +26,3 @@ class ReleaseC2 extends ReleasePubPrivCheckpoint {
         return retroMap;
     }
 }
-
-const ppt = new ReleaseC2();
-const start = Date.now();
-Log.Level = LogLevel.INFO;
-ppt.process().then(() => {
-    Log.info("ReleaseC2::process() - complete; took: " + Util.took(start));
-    process.exit();
-}).catch((err) => {
-    Log.error("ReleaseC2::process() - ERROR: " + err.message);
-    process.exit();
-});
