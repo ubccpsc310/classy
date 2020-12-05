@@ -3,17 +3,17 @@ import Util from "../../../../common/Util";
 import {RetroScoreMap} from "./ReleaseCheckpoint";
 import {ReleasePubPrivCheckpoint} from "./ReleasePubPrivCheckpoint";
 
-class ReleaseC2 extends ReleasePubPrivCheckpoint {
-    protected readonly DELIVID: string = "c2";
+class ReleaseC3 extends ReleasePubPrivCheckpoint {
+    protected readonly DELIVID: string = "c3";
     protected readonly DRY_RUN: boolean = true;
     protected readonly TEST_USER: string = "XXXX";
-    protected readonly AUDIT_ID: string = 'ReleaseC2';
-    protected readonly RETRO_PATH: string = `${__dirname}/c2retros.csv`;
+    protected readonly AUDIT_ID: string = 'ReleaseC3';
+    protected readonly RETRO_PATH: string = `${__dirname}/c3retros.csv`;
 
-    protected readonly ACCEPTANCE_TEST_COUNT: number = 29;
-    protected readonly PUBLIC_TEST_COUNT: number = 44;
+    protected readonly ACCEPTANCE_TEST_COUNT: number = 56;
+    protected readonly PUBLIC_TEST_COUNT: number = 61;
     protected readonly PRIVATE_TEST_COUNT: number = Number(process.env.PRIVATE_TEST_COUNT);
-    protected readonly CONTRIBUTION_PATH = `${__dirname}/c2contribution.csv`;
+    protected readonly CONTRIBUTION_PATH = `${__dirname}/c3contribution.csv`;
     protected readonly TERM: string = "2020W1";
 
     protected handleRetroRecord(record: { [p: string]: string }, contributionData: Set<string>): RetroScoreMap {
@@ -29,13 +29,13 @@ class ReleaseC2 extends ReleasePubPrivCheckpoint {
     }
 }
 
-const ppt = new ReleaseC2();
+const ppt = new ReleaseC3();
 const start = Date.now();
 Log.Level = LogLevel.INFO;
 ppt.process().then(() => {
-    Log.info("ReleaseC2::process() - complete; took: " + Util.took(start));
+    Log.info("ReleaseC3::process() - complete; took: " + Util.took(start));
     process.exit();
 }).catch((err) => {
-    Log.error("ReleaseC2::process() - ERROR: " + err.message);
+    Log.error("ReleaseC3::process() - ERROR: " + err.message);
     process.exit();
 });
