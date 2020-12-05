@@ -140,7 +140,7 @@ export abstract class ReleasePubPrivCheckpoint extends ReleaseCheckpoint {
         const csid = record[csidCol].toLowerCase();
         let score = Number(record[scoreCol]);
         let missingForm = false;
-        let feedback = record[fbCol];
+        const feedback = record[fbCol];
         if (!contributionData.has(csid)) {
             score = Math.min(score, 0.8);
             missingForm = true;

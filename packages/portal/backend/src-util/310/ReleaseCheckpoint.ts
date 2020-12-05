@@ -97,7 +97,7 @@ export abstract class ReleaseCheckpoint {
 
         let retroComment = `Retrospective Score: ${score}`;
         if (missingForm) {
-            retroComment += "; No Contribution Form Submitted"
+            retroComment += "; No Contribution Form Submitted";
         }
         if (feedback !== "") {
             retroComment += `; TA Feedback: ${feedback}`;

@@ -1,7 +1,7 @@
 import Log, {LogLevel} from "../../../../common/Log";
 import Util from "../../../../common/Util";
-import {ReleasePubPrivCheckpoint} from "./ReleasePubPrivCheckpoint";
 import {RetroScoreMap} from "./ReleaseCheckpoint";
+import {ReleasePubPrivCheckpoint} from "./ReleasePubPrivCheckpoint";
 
 class ReleaseC2 extends ReleasePubPrivCheckpoint {
     protected readonly DELIVID: string = "c2";
