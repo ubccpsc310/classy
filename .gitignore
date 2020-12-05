@@ -40,9 +40,6 @@ packages/portal/backend/src/custom/CustomCourseRoutes.ts
 
 .circleci/
 
-# Webstorm
-**/.idea
-
 # Visual Studio
 .vscode/
 
