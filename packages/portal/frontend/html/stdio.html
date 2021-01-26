@@ -16,6 +16,11 @@
 <ons-page id="stdioPage">
     <ons-toolbar>
         <div class="center" id="headerTitle">Container Output Viewer</div>
+        <div id='indexLogin' class="right">
+            <ons-toolbar-button id="switchViewBtn">
+                <span id="switchViewText"style="vertical-align: top; font-size: 80%;">Admin View</span>
+            </ons-toolbar-button>
+        </div>
     </ons-toolbar>
     <div style="height: 100%; display:flex; align-items:center; justify-content: center;">
         <div id="stdioViewer">Loading...</div>
@@ -68,8 +73,8 @@
             return vars;
         }
 
-        function loadStdio(delivId, repoId, sha) {
-            var url = HOST + 'portal/resource/' + sha + '-' + delivId + '/staff/stdio.txt';
+        function loadStdio(delivId, repoId, sha, stdioType) {
+            var url = HOST + 'portal/resource/' + sha + '-' + delivId + '/' + stdioType + '/stdio.txt';
             getHTTP(url, HEADERS, function (stdio) {
                 editor.setValue(stdio);
                 editor.clearSelection();
@@ -161,9 +166,27 @@
         editor.setReadOnly(true);
 
         // asyncs
-        loadStdio(delivId, repoId, sha);
+        loadStdio(delivId, repoId, sha, 'staff');
         loadNotPassingTestNames(delivId, repoId, sha);
+
+        // switchViewBtn
+        var switchViewBtn = document.getElementById('switchViewBtn');
+        switchViewBtn.addEventListener('click', (event) => {
+            var btnLabel = event.target.innerText;
+            editor.setValue('Loading...');
+            if (btnLabel.startsWith('Admin')) {
+                loadStdio(delivId, repoId, sha, 'admin');
+                loadNotPassingTestNames(delivId, repoId, sha);
+                event.target.innerText = 'Staff View';
+            } else {
+                loadStdioT(delivId, repoId, sha, 'staff');
+                loadNotPassingTestNamesT(delivId, repoId, sha);
+                event.target.innerText = 'Admin View';
+            }
+        });
+
     });
+    
 </script>
 
 </body>
