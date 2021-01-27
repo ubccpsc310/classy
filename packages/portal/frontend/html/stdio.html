@@ -16,7 +16,7 @@
 <ons-page id="stdioPage">
     <ons-toolbar>
         <div class="center" id="headerTitle">Container Output Viewer</div>
-        <div id='indexLogin' class="right">
+        <div id='stdioSwitch' class="right">
             <ons-toolbar-button id="switchViewBtn">
                 <span id="switchViewText"style="vertical-align: top; font-size: 80%;">Admin View</span>
             </ons-toolbar-button>
@@ -169,21 +169,25 @@
         loadStdio(delivId, repoId, sha, 'staff');
         loadNotPassingTestNames(delivId, repoId, sha);
 
-        // switchViewBtn
+        // switchViewBtn: only enable the admin/staff stdio switch btn when the user is an admin
         var switchViewBtn = document.getElementById('switchViewBtn');
-        switchViewBtn.addEventListener('click', (event) => {
-            var btnLabel = event.target.innerText;
-            editor.setValue('Loading...');
-            if (btnLabel.startsWith('Admin')) {
-                loadStdio(delivId, repoId, sha, 'admin');
-                loadNotPassingTestNames(delivId, repoId, sha);
-                event.target.innerText = 'Staff View';
-            } else {
-                loadStdioT(delivId, repoId, sha, 'staff');
-                loadNotPassingTestNamesT(delivId, repoId, sha);
-                event.target.innerText = 'Admin View';
-            }
-        });
+        if (localStorage.getItem('isAdmin') !== 'true') {
+            switchViewBtn.disabled = true;
+        } else {
+            switchViewBtn.addEventListener('click', (event) => {
+                var btnLabel = event.target.innerText;
+                editor.setValue('Loading...');
+                if (btnLabel.startsWith('Admin')) {
+                    event.target.innerText = 'Staff View';
+                    loadStdio(delivId, repoId, sha, 'admin');
+                    loadNotPassingTestNames(delivId, repoId, sha);
+                } else {
+                    event.target.innerText = 'Admin View';
+                    loadStdio(delivId, repoId, sha, 'staff');
+                    loadNotPassingTestNames(delivId, repoId, sha);
+                }
+            });
+        }
 
     });
     
