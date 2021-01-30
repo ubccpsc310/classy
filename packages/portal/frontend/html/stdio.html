@@ -74,7 +74,7 @@
         }
 
         function loadStdio(delivId, repoId, sha, stdioType) {
-            var url = HOST + 'portal/resource/' + sha + '-' + delivId + '/' + stdioType + '/stdio.txt';
+            const url = `${HOST}/portal/resource/${sha}-${delivId}/${stdioType}/stdio.txt`;
             getHTTP(url, HEADERS, function (stdio) {
                 editor.setValue(stdio);
                 editor.clearSelection();
@@ -132,7 +132,7 @@
         }
 
         function loadNotPassingTestNames(delivId, repoId, sha) {
-            var url = HOST + '/portal/admin/dashboard/' + delivId + '/' + repoId;
+            const url = `${HOST}/portal/admin/dashboard/${delivId}/${repoId}`;
             getHTTP(url, HEADERS, function (data) {
                 json = JSON.parse(data);
                 var commit = json['success']
@@ -171,9 +171,7 @@
 
         // switchViewBtn: only enable the admin/staff stdio switch btn when the user is an admin
         var switchViewBtn = document.getElementById('switchViewBtn');
-        if (localStorage.getItem('isAdmin') !== 'true') {
-            switchViewBtn.disabled = true;
-        } else {
+        function handleSwitchStdio() {
             switchViewBtn.addEventListener('click', (event) => {
                 var btnLabel = event.target.innerText;
                 editor.setValue('Loading...');
@@ -187,6 +185,12 @@
                     loadNotPassingTestNames(delivId, repoId, sha);
                 }
             });
+        }
+
+        if (localStorage.getItem('isAdmin') !== 'true') {
+            switchViewBtn.disabled = true;
+        } else {
+            handleSwitchStdio();
         }
 
     });
