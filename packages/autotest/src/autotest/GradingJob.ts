@@ -98,7 +98,8 @@ export class GradingJob {
         });
         const maxExecTime = this.input.containerConfig.maxExecTime;
 
-        const stdio = fs.createWriteStream(this.path + "/staff/stdio.txt");
+        const stdioPath = this.input.containerConfig.custom?.stdioPath ?? "/staff/stdio.txt";
+        const stdio = fs.createWriteStream(this.path + stdioPath);
         const stream = await container.attach({stream: true, stdout: true, stderr: true});
         container.modem.demuxStream(stream, stdio, stdio);
 
