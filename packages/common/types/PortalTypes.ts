@@ -216,7 +216,7 @@ export interface AutoTestConfigTransport {
      * A custom JSON object that will be passed to the container. Can be {}.
      *
      */
-    custom: object;
+    custom: {[key: string]: any};
 
     openTimestamp: number;
 
