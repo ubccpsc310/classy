@@ -98,7 +98,8 @@ export class GradingJob {
         });
         const maxExecTime = this.input.containerConfig.maxExecTime;
 
-        const stdioPath = this.input.containerConfig.custom?.stdioPath ?? "/staff/stdio.txt";
+        const defaultStdioPath = "/staff/stdio.txt";
+        const stdioPath = this.input.containerConfig.custom?.stdioPath ?? defaultStdioPath;
         const stdio = fs.createWriteStream(this.path + stdioPath);
         const stream = await container.attach({stream: true, stdout: true, stderr: true});
         container.modem.demuxStream(stream, stdio, stdio);
@@ -120,6 +121,11 @@ export class GradingJob {
                 out.report.feedback = "Failed to read grade report.";
                 out.state = ContainerState.NO_REPORT;
             }
+        }
+
+        // FIXME WARNING : This is not meant to be merged
+        if (stdioPath !== defaultStdioPath && out.report.scoreOverall < 50) {
+            await fs.move(this.path + stdioPath, this.path + defaultStdioPath);
         }
 
         // cleanup
