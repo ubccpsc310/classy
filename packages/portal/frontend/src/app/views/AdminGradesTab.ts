@@ -140,7 +140,7 @@ export class AdminGradesTab extends AdminPage {
                             } else {
                                 html = score;
                             }
-                            tableCell = {value: score, html: score};
+                            tableCell = {value: score, html};
                         }
                     }
                 }
