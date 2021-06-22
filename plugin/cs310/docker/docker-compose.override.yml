@@ -1,0 +1,151 @@
+# Before deploying, make sure you have done the following:
+# - created a user `classy` on the host
+# - installed SSL certificates for the host
+# - created a `.env` file in the same dir as this file and populated appropriately
+# - opened port 80 and port 443 (publicly)
+#
+# A few high-level notes about this config file:
+# - At deploy-time, all services have access to the values in the .env file; however, they are only accessible to the
+#   running service if the env_file directive is specified. If you only need to pass a subset of the env vars, use the
+#   environment directive and list only the var keys you need.
+# - As configured, only ports 80 and 443 are seen by the host; all other ports listed (with the expose directive) are
+#   only accessible to linked services (i.e. those listed in the depends_on directive). If a service should be publicly
+#   accessible, consider listing it in the proxy service instead of opening additional ports on the host.
+# - In general, services should be started as non-root users. Here, we launch services as the classy user (configured on
+#   the host) using the user directive.
+# - Services specified here can be extended (and additional services can be added) by creating additional
+#   docker-compose.yml files. See https://docs.docker.com/compose/extends/#example-use-case.
+
+# NOTE: Do not change the container names. They are used to refer to the service throughout the codebase in http requests.
+
+version: "3.5"
+
+services:
+    autotest:
+        build:
+            context: ./
+            dockerfile: ./packages/autotest/Dockerfile
+        container_name: autotest
+        depends_on:
+            - db
+        env_file: .env
+        expose:
+            - ${AUTOTEST_PORT}
+        restart: always
+        user: "${UID}:${GID}"
+        volumes:
+            - "${HOST_DIR}:${PERSIST_DIR}"
+            - "/var/run/docker.sock:/var/run/docker.sock"
+    db:
+        command: --quiet --slowms 250
+        container_name: db
+        environment:
+          - MONGO_INITDB_ROOT_USERNAME
+          - MONGO_INITDB_ROOT_PASSWORD
+        ports:
+            - "27017:27017"
+        image: mongo:3-jessie
+        restart: always
+        user: "${UID}"
+        volumes:
+            - /var/opt/classy/db:/data/db
+    portal:
+        build:
+            args:
+                - GH_BOT_USERNAME
+                - GH_BOT_EMAIL
+            context: ./
+            dockerfile: ./packages/portal/Dockerfile
+        container_name: portal
+        depends_on:
+            - db
+            - autotest
+        env_file: .env
+        expose:
+            - ${BACKEND_PORT}
+        restart: always
+        user: "${UID}"
+        volumes:
+            - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
+            - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
+            - "${HOST_DIR}:${PERSIST_DIR}:ro"
+    proxy:
+        build:
+            args:
+                - UID
+                - SSL_CERT_PATH
+                - SSL_KEY_PATH
+                - BACKEND_PORT
+                - UI_PORT
+            context: ./
+            dockerfile: ./packages/proxy/Dockerfile
+        container_name: proxy
+        depends_on:
+            - portal
+            - reference_ui
+            - labcycleui
+        ports:
+            - "80:8080"
+            - "443:8443"
+        restart: always
+        user: "${UID}"
+        volumes:
+            - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
+            - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
+    geolocation:
+        image: cpsc310geocoder
+        container_name: geocoder
+        ports:
+            - ${GEO_PORT}:${GEO_PORT}
+        restart: always
+        user: "${UID}"
+    reference_ui:
+        image: cpsc310reference_ui
+        container_name: refui
+        environment:
+            - PLATFORM
+            - LOG_LEVEL
+        expose:
+            - ${UI_PORT}
+        restart: always
+        user: "${UID}"
+    labcyclewebservice:
+        build:
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/labcycle.git
+            dockerfile: ./backend.dockerfile
+        container_name: labcyclewebservice
+        depends_on:
+          - portal
+        env_file: .env
+        environment:
+        - "LC_SERVER_ADDRESS=${PUBLICHOSTNAME}/labcycle"
+        expose:
+        - 4321
+        restart: always
+        volumes:
+        - "${LC_HOST_MANIFEST_PATH}:${LC_MANIFEST_PATH}"
+    labcycleui:
+        build:
+            args:
+            - "SERVER_ADDRESS=${PUBLICHOSTNAME}/labcycle"
+            - "PUBLIC_ADDRESS=${PUBLICHOSTNAME}/labs"
+            - "LABS=${LC_LABS}"
+            - "TERM=${LC_TERM}"
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/labcycle.git
+            dockerfile: ./frontend.dockerfile
+        container_name: labcycleui
+        depends_on:
+          - labcyclewebservice
+        expose:
+        - 5000
+        restart: always
+    patchtool:
+        image: "sinatra"
+        build:
+            context: https://${GH_DOCKER_TOKEN}@github.students.cs.ubc.ca/cpsc310/repoPatchTool.git#webservice
+        container_name: patchtool
+        environment:
+        - GH_BOT_TOKEN
+        - "COURSE_GH_ORG_TOKEN=${GH_DOCKER_TOKEN}"
+        - PATCH_SOURCE_REPO
+        restart: always
