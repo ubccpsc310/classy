@@ -350,7 +350,8 @@ export abstract class AutoTest implements IAutoTest {
                     const totalJobsRunning = that.jobs.length;
                     Log.info("AutoTest::tick::tickQueue(..)         [JOB] - job start: " + queue.getName() + "; deliv: " +
                         (info.target.delivId + ";").padEnd(8, " ") + " repo: " + (info.target.repoId + ";").padEnd(18, " ") + " SHA: " +
-                        Util.shaHuman(info.target.commitSHA) + "; # running: " + totalJobsRunning + "; # queued: " + totalNumQueued +
+                        Util.shaHuman(info.target.commitSHA) + "; # running: " + totalJobsRunning +
+                        "; # queued: " + (totalNumQueued + "").padStart(4, " ") +
                         " ( e: " + that.expressQueue.length() + ", s: " + that.standardQueue.length() + ", l: " + that.lowQueue.length() + " )");
 
                     let gradingJob: GradingJob;
@@ -626,7 +627,7 @@ export abstract class AutoTest implements IAutoTest {
                 "; repo: " + input.target.repoId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
 
             let score = -1;
-            if (record.output.report !== null && typeof record.output.report.scoreOverall !== "undefined") {
+            if (record?.output?.report?.scoreOverall) {
                 score = record.output.report.scoreOverall;
             }
             const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
@@ -643,6 +644,14 @@ export abstract class AutoTest implements IAutoTest {
                 timestamp: input.target.timestamp,
                 custom: {}
             };
+            // provide a way for the grade controller to contribute data directly
+            // to the grade record
+            if (record?.output?.custom) {
+                gradePayload.custom.output = record.output.custom;
+            }
+            if (record?.output?.report?.custom) {
+                gradePayload.custom.result = record.output.report.custom;
+            }
         } catch (err) {
             Log.error("AutoTest::handleTick(..) - ERROR in execution for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         } finally {

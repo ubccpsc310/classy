@@ -149,7 +149,7 @@ export class GradingJob {
             out.state = ContainerState.FAIL;
             out.postbackOnComplete = true; // always send fail feedback
         } else if (exitCode === -1) {
-            let msg = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time. ";
+            let msg = "Container did not complete for **`#" + this.input.target.delivId + "`** in the allotted time. ";
             msg += "This likely means that _our_ tests exposed a slow or non-terminating path in _your_ implementation. ";
             msg += "You should augment your tests; a comprehensive local suite will uncover the problem.";
 
@@ -161,7 +161,7 @@ export class GradingJob {
         } else if (reportRead === false) {
             Log.warn("GradingJob::run() - No grading report for repo: " + this.input.target.repoId +
                 "; delivId: " + this.input.target.delivId + "; SHA: " + Util.shaHuman(this.input.target.commitSHA));
-            out.report.feedback = "Failed to read grade report. Make a new commit and try again.";
+            out.report.feedback = "Failed to read grade report for **`#" + this.input.target.delivId + "`**. Make a new commit and try again.";
             out.report.result = ContainerState.NO_REPORT;
             out.state = ContainerState.NO_REPORT;
         } else {
