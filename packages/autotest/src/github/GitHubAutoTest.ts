@@ -121,10 +121,25 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 				const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
 				input.target.shouldPromote = shouldPromotePush;
 
+				const forward = async (input: ContainerInput) => {
+					fetch('https://localhost:1234/jobs', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({ name: 'John Doe', age: 30 }),
+					})
+						.then(response => response.json())
+						.then(data => console.log(data))
+						.catch(error => console.error('Error:', error));
+				}
+
+
 				if (info.botMentioned === true) {
 					Log.info(PREAMBLE + "bot mentioned; adding to exp queue");
 					// requested jobs will always go on express
 					this.addToExpressQueue(input);
+					await forward(input)
 				} else {
 					if (shouldPromotePush === true) {
 						Log.info(PREAMBLE + "shouldPromote; Force adding to std queue");
