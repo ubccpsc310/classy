@@ -272,7 +272,7 @@ workflows:
       not:
         equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
-      - build
+      - build_and_test
   nightly:
     when:
       and:
