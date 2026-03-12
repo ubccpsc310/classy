@@ -279,4 +279,6 @@ workflows:
         - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
         - equal: [ nightly_build, << pipeline.schedule.name >> ]
     jobs:
-      - build_run_stop
+      - build
+# we really want to know the container is still working (build) not just that it builds (build_run_stop)
+#      - build_run_stop
